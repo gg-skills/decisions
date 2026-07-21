@@ -9,8 +9,8 @@
  *
  * @example
  * ```bash
- * npx tsx skills/decisions/scripts/generate-decision-page.ts --input decisions.json --output page.html
- * npx tsx skills/decisions/scripts/generate-decision-page.ts --input decisions.json --output page.html --dry-run
+ * npx tsx .agents/skills/decisions/scripts/generate-decision-page.ts --input decisions.json --output page.html
+ * npx tsx .agents/skills/decisions/scripts/generate-decision-page.ts --input decisions.json --output page.html --dry-run
  * ```
  *
  * @testing CLI manual: npm run file-overview-standards:target-brief -- --file skills/decisions/scripts/generate-decision-page.ts

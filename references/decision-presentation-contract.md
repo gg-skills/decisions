@@ -41,7 +41,7 @@ Only follow this path when the user explicitly asks for the interactive decision
 1. Normalize the authoritative decision inventory.
 2. Materialize the queue into JSON using `references/decision-page-json-contract.md`.
 3. Generate the interactive page:
-   `npx tsx skills/decisions/scripts/generate-decision-page.ts --input <definition.json> --output <page.html>`
+   `npx tsx .agents/skills/decisions/scripts/generate-decision-page.ts --input <definition.json> --output <page.html>`
 4. Present the page as a clickable `file://` link using the **absolute path**, followed by a
    brief plain-English list of the decisions the page resolves. Example:
 

@@ -55,18 +55,18 @@ For a direct command lookup, see [Quick Commands](#quick-commands) below.
 npm run check:mermaid -- --files <decision-packet.md>
 
 # Generate the interactive decision page from a JSON definition
-npx tsx skills/decisions/scripts/generate-decision-page.ts --input <definition.json> --output <page.html>
+npx tsx .agents/skills/decisions/scripts/generate-decision-page.ts --input <definition.json> --output <page.html>
 
 # Run the full decision page test suite
-npx tsx skills/decisions/tests/decision-page-generator.unit.test.ts
+npx tsx .agents/skills/decisions/tests/decision-page-generator.unit.test.ts
 
 # Session helper: prepare page and definition together
-npx tsx skills/decisions/scripts/decision-page-session.ts prepare --definition-file <definition.json> --output-dir <dir>
+npx tsx .agents/skills/decisions/scripts/decision-page-session.ts prepare --definition-file <definition.json> --output-dir <dir>
 
 # Check decision packet completeness (14-item checklist)
-npx tsx skills/decisions/scripts/check-decision-completeness.ts --latest
-npx tsx skills/decisions/scripts/check-decision-completeness.ts --packet <path.md>
-npx tsx skills/decisions/scripts/check-decision-completeness.ts --latest --json
+npx tsx .agents/skills/decisions/scripts/check-decision-completeness.ts --latest
+npx tsx .agents/skills/decisions/scripts/check-decision-completeness.ts --packet <path.md>
+npx tsx .agents/skills/decisions/scripts/check-decision-completeness.ts --latest --json
 ```
 
 For full command surface, see `references/decision-page-json-contract.md`.
@@ -224,8 +224,8 @@ already defines a better artifact location.
    active decision, validate its Mermaid diagrams, and present a compact inline table summary.
 3. Only if the user explicitly asks for the interactive page: build JSON per
    `references/decision-page-json-contract.md` and generate it with
-   `npx tsx skills/decisions/scripts/decision-page-session.ts prepare ...` or
-   `npx tsx skills/decisions/scripts/generate-decision-page.ts ...`. Present as a clickable `file://` link with a plain-English
+   `npx tsx .agents/skills/decisions/scripts/decision-page-session.ts prepare ...` or
+   `npx tsx .agents/skills/decisions/scripts/generate-decision-page.ts ...`. Present as a clickable `file://` link with a plain-English
    summary.
 4. Wait for the user reply.
 5. Support reply modes: direct token, pasted token block, natural language, clarifying questions,
@@ -248,7 +248,7 @@ already defines a better artifact location.
 | Building an interactive decision page | `references/decision-page-json-contract.md` | `references/decision-presentation-contract.md` |
 | Validating Mermaid diagrams in a packet | `references/decision-presentation-contract.md` (Mermaid Safety Rules) | `references/decision-page-json-contract.md` |
 | Syncing token blocks back to a plan | `references/decision-page-json-contract.md` (Clipboard Payload) | `references/decision-presentation-contract.md` |
-| Diagnostic / inspection-first | Run `npm run check:mermaid -- --files <packet.md>` and `npx tsx skills/decisions/tests/decision-page-generator.unit.test.ts` before loading files | -- |
+| Diagnostic / inspection-first | Run `npm run check:mermaid -- --files <packet.md>` and `npx tsx .agents/skills/decisions/tests/decision-page-generator.unit.test.ts` before loading files | -- |
 
 For diagnostic requests, run the inspection commands first before loading any reference files. Load
 only the subset the task needs.
@@ -375,7 +375,7 @@ For each option, verify:
 | Symptom | Likely cause | Fix |
 |---------|-------------|-----|
 | Mermaid validation fails with "Syntax error in text" | Unquoted node label containing parentheses, colons, or backticks | Quote every label with `["..."]` and remove markdown syntax inside labels. See `references/decision-presentation-contract.md`. |
-| Generated HTML page shows no decisions | JSON definition missing `decisions` array or all decisions filtered by `dependsOn` | Validate the definition with `npx tsx skills/decisions/tests/decision-page-generator.unit.test.ts` and check `dependsOn` chains. |
+| Generated HTML page shows no decisions | JSON definition missing `decisions` array or all decisions filtered by `dependsOn` | Validate the definition with `npx tsx .agents/skills/decisions/tests/decision-page-generator.unit.test.ts` and check `dependsOn` chains. |
 | Token block sync fails with "unknown decision token" | Token in the pasted block does not match any option in the definition | Verify the token spelling matches `CHOOSE_DECISION_<DECISION_ID>_<OPTION_NAME>` exactly. |
 | Inline summary is too long for terminal scanning | Comparison table has too many rows or abstract cells | Abbreviate aggressively; move detail to the packet file; keep only concrete identifiers and consequences. |
 | User cannot choose from the inline summary alone | Cells lack exact identifiers, file names, or behavior changes | Add concrete mechanism or affected surface plus practical consequence to each cell. |

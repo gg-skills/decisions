@@ -6,7 +6,7 @@
  * This file owns regression coverage for the decision-page pipeline: declarative dependency validation, HTML rendering with clipboard hooks, and token-block selection parsing.
  * Flow: build fixture definition -> exercise validateDecisionPageDefinition / buildHtml / summarizeSelections -> assert output fields and error conditions.
  *
- * @testing tsx standalone: npx tsx skills/decisions/tests/decision-page-generator.unit.test.ts
+ * @testing tsx standalone: npx tsx .agents/skills/decisions/tests/decision-page-generator.unit.test.ts
  * @see skills/decisions/scripts/decision-page-contract.ts - Decision page contract validator under test whose dependency logic is asserted here.
  * @see skills/decisions/scripts/generate-decision-page.ts - HTML generator under test whose output rendering is asserted here.
  * @see skills/decisions/scripts/decision-page-session.ts - Session summarizer under test whose token-block parsing is asserted here.
@@ -212,7 +212,7 @@ const tests: UnitTest[] = [
         "npx",
         [
           "tsx",
-          "skills/decisions/scripts/generate-decision-page.ts",
+          ".agents/skills/decisions/scripts/generate-decision-page.ts",
           "--input",
           inputPath,
           "--output",

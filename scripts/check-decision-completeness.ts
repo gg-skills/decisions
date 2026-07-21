@@ -8,8 +8,8 @@
  * heuristics for metadata and checklist rows, weighted scoring, and the presentability gate.
  * Flow: argv -> resolve packet path (`--packet` or newest `decision-*.md` under `.tmp/decisions/<run>/`) -> read file -> extract metadata -> evaluate checklist -> stdout (and `process.exit(1)` on read errors).
  *
- * @testing CLI: npx tsx skills/decisions/scripts/check-decision-completeness.ts --packet <path-to-decision-packet.md> [--json] (from repository root; inspect checklist lines, score, and Presentable line in stdout, or validate JSON shape when `--json` is set).
- * @testing CLI: npx tsx skills/decisions/scripts/check-decision-completeness.ts --latest [--json] (from repository root after a decisions run materialized `.tmp/decisions/<run>/decision-*.md`; confirm the script resolves the newest run directory and emits the same report fields as the explicit `--packet` path).
+ * @testing CLI: npx tsx .agents/skills/decisions/scripts/check-decision-completeness.ts --packet <path-to-decision-packet.md> [--json] (from repository root; inspect checklist lines, score, and Presentable line in stdout, or validate JSON shape when `--json` is set).
+ * @testing CLI: npx tsx .agents/skills/decisions/scripts/check-decision-completeness.ts --latest [--json] (from repository root after a decisions run materialized `.tmp/decisions/<run>/decision-*.md`; confirm the script resolves the newest run directory and emits the same report fields as the explicit `--packet` path).
  *
  * @see skills/decisions/SKILL.md - Canonical decisions skill that defines how decision packets are authored and where this completeness gate fits before presentation.
  * @see skills/decisions/references/decision-presentation-contract.md - Markdown presentation contract and checklist-oriented expectations that align with the regex probes in this script.

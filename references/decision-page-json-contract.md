@@ -5,7 +5,7 @@ standalone decision page instead of leading with the markdown packet fallback.
 
 ## Generator Command
 ```bash
-npx tsx skills/decisions/scripts/generate-decision-page.ts --input <definition.json> --output <page.html>
+npx tsx .agents/skills/decisions/scripts/generate-decision-page.ts --input <definition.json> --output <page.html>
 ```
 
 The generator validates the definition first, then writes a standalone HTML artifact that:
@@ -24,13 +24,13 @@ When the page is part of a real planning or decision session rather than an isol
 the session helper so the generated page and later token-block sync share the same structured
 definition:
 ```bash
-npx tsx skills/decisions/scripts/decision-page-session.ts prepare --definition-file <definition.json> --output-dir <dir>
+npx tsx .agents/skills/decisions/scripts/decision-page-session.ts prepare --definition-file <definition.json> --output-dir <dir>
 ```
 
 After the user pastes back the copied token block:
 ```bash
-npx tsx skills/decisions/scripts/decision-page-session.ts summarize-token-block --definition-file <definition.json> --tokens-file <tokens.txt>
-npx tsx skills/decisions/scripts/decision-page-session.ts sync-plan --definition-file <definition.json> --tokens-file <tokens.txt> --plan-file <plan.md> --execute
+npx tsx .agents/skills/decisions/scripts/decision-page-session.ts summarize-token-block --definition-file <definition.json> --tokens-file <tokens.txt>
+npx tsx .agents/skills/decisions/scripts/decision-page-session.ts sync-plan --definition-file <definition.json> --tokens-file <tokens.txt> --plan-file <plan.md> --execute
 ```
 
 This keeps two artifacts aligned from the same canonical definition:

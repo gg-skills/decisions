@@ -9,9 +9,9 @@
  *
  * @example
  * ```bash
- * npx tsx skills/decisions/scripts/decision-page-session.ts prepare --definition-file decisions.json --output-dir ./out
- * npx tsx skills/decisions/scripts/decision-page-session.ts summarize-token-block --definition-file decisions.json --tokens-file tokens.txt
- * npx tsx skills/decisions/scripts/decision-page-session.ts sync-plan --definition-file decisions.json --tokens-file tokens.txt --plan-file plan.md --execute
+ * npx tsx .agents/skills/decisions/scripts/decision-page-session.ts prepare --definition-file decisions.json --output-dir ./out
+ * npx tsx .agents/skills/decisions/scripts/decision-page-session.ts summarize-token-block --definition-file decisions.json --tokens-file tokens.txt
+ * npx tsx .agents/skills/decisions/scripts/decision-page-session.ts sync-plan --definition-file decisions.json --tokens-file tokens.txt --plan-file plan.md --execute
  * ```
  *
  * @testing CLI manual: npm run file-overview-standards:target-brief -- --file skills/decisions/scripts/decision-page-session.ts
@@ -122,9 +122,9 @@ function printUsage(): void {
   console.log(
     [
       "Usage:",
-      "  npx tsx skills/decisions/scripts/decision-page-session.ts prepare --definition-file <path> --output-dir <dir>",
-      "  npx tsx skills/decisions/scripts/decision-page-session.ts summarize-token-block --definition-file <path> --tokens-file <path>",
-      "  npx tsx skills/decisions/scripts/decision-page-session.ts sync-plan --definition-file <path> --tokens-file <path> --plan-file <path> [--execute]",
+      "  npx tsx .agents/skills/decisions/scripts/decision-page-session.ts prepare --definition-file <path> --output-dir <dir>",
+      "  npx tsx .agents/skills/decisions/scripts/decision-page-session.ts summarize-token-block --definition-file <path> --tokens-file <path>",
+      "  npx tsx .agents/skills/decisions/scripts/decision-page-session.ts sync-plan --definition-file <path> --tokens-file <path> --plan-file <path> [--execute]",
     ].join("\n"),
   );
 }
