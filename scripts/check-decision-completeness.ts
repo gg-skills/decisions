@@ -1,8 +1,9 @@
 #!/usr/bin/env npx tsx
 
 /**
- * @fileoverview CLI entrypoint that scores decision markdown packets against the 14-item Decision
- * Quality Checklist and prints a human-readable completeness report or JSON for automation.
+ * @fileoverview CLI entrypoint that scores decision markdown packets against the 18-item Decision
+ * Quality Checklist (including behavior-depth gates) and prints a human-readable completeness
+ * report or JSON for automation.
  *
  * This file owns argv parsing, latest-packet discovery under `.tmp/decisions/`, markdown
  * heuristics for metadata and checklist rows, weighted scoring, and the presentability gate.
@@ -26,7 +27,7 @@ import { argv } from "process";
 // ============================================================================
 
 /**
- * One row in the 14-item decision quality checklist used for weighted scoring.
+ * One row in the 18-item decision quality checklist used for weighted scoring.
  *
  * @remarks
  * Template definitions omit `checked`; runtime evaluation merges in results from {@link checkItem}.
@@ -82,9 +83,13 @@ const CHECKLIST_ITEMS: Omit<ChecklistItem, "checked">[] = [
   { number: 9, name: "Blocking status declared", description: "Whether decision blocks implementation", required: true, weight: 1 },
   { number: 10, name: "Impact surface documented", description: "Affected files, systems, tests listed", required: true, weight: 1 },
   { number: 11, name: "Recommended option stated", description: "Recommendation with evidence", required: true, weight: 1 },
-  { number: 12, name: "Inline summary compact", description: "Table has concrete identifiers", required: false, weight: 1 },
+  { number: 12, name: "Inline summary usable", description: "Tables present; behavior narrative expected in chat", required: false, weight: 1 },
   { number: 13, name: "Answer persistence path clear", description: "How to persist the answer documented", required: false, weight: 1 },
   { number: 14, name: "Next decision queued", description: "Next unresolved decision identified", required: false, weight: 1 },
+  { number: 15, name: "Behavior being decided", description: "Trigger, step-by-step flow, state, observation, fork", required: true, weight: 3 },
+  { number: 16, name: "Worked scenario", description: "Concrete scenario traced through current and option outcomes", required: true, weight: 3 },
+  { number: 17, name: "Per-option behavioral diff", description: "Before→After prose for choosable options", required: true, weight: 3 },
+  { number: 18, name: "Observable outcomes", description: "What humans notice after each option ships", required: true, weight: 2 },
 ];
 
 // ============================================================================
@@ -123,9 +128,11 @@ function guessTier(content: string): string {
   const wordCount = content.split(/\s+/).length;
   const hasDiagram = /```mermaid|graph\s+\w+/im.test(content);
   const hasBlocking = /blocks?\s+implementation|blocking/i.test(content);
-  
-  if (wordCount > 800 && hasDiagram && hasBlocking) return "Full";
-  if (wordCount > 400) return "Standard";
+  const hasBehaviorDepth =
+    /Behavior Being Decided|Step-by-step current flow|Worked Scenario/i.test(content);
+
+  if (wordCount > 1100 && hasDiagram && hasBlocking && hasBehaviorDepth) return "Full";
+  if (wordCount > 600 && hasBehaviorDepth) return "Standard";
   return "Minimal";
 }
 
@@ -139,7 +146,7 @@ function guessTier(content: string): string {
  */
 function checkItem(content: string, item: Omit<ChecklistItem, "checked">): boolean {
   switch (item.number) {
-    case 1: return /^#.*Decision:.*\n/m.test(content) && content.match(/^#.*Decision:.*\n/m)?.[0].length > 15;
+    case 1: return /^#.*Decision:.*\n/m.test(content) && (content.match(/^#.*Decision:.*\n/m)?.[0].length ?? 0) > 15;
     case 2: return /Status:|status.*(?:open|answered|deferred|blocked)/i.test(content);
     case 3: return /\.plans\/|\.studies\/|plan-|study-/i.test(content);
     case 4: return /Pros:|Cons:|pros:|cons:|impact/i.test(content);
@@ -153,6 +160,21 @@ function checkItem(content: string, item: Omit<ChecklistItem, "checked">): boole
     case 12: return /\|.*\|.*\|/m.test(content);
     case 13: return /persist|persistence|write.*back/i.test(content);
     case 14: return /next.*decision|queue|following.*decision/i.test(content);
+    case 15:
+      return (
+        /##\s*Behavior Being Decided/i.test(content) &&
+        /Trigger|Entry points|Step-by-step/i.test(content) &&
+        /Operator|observation|observes|State (read|written)/i.test(content)
+      );
+    case 16:
+      return (
+        /##\s*Worked Scenario/i.test(content) &&
+        /Setup|Trigger|Current outcome|Per-option/i.test(content)
+      );
+    case 17:
+      return /Behavioral Diff|\*\*Before:\*\*|Before → After|Before->After/i.test(content);
+    case 18:
+      return /Observable Outcomes|Operator sees|System emits/i.test(content);
     default: return false;
   }
 }
@@ -219,7 +241,7 @@ function checkDecision(packetPath: string, json: boolean = false): void {
     
     const canPresent = requiredScore === requiredMax;
     
-    const tier = score >= 24 ? "Full" : score >= 18 ? "Standard" : "Minimal";
+    const tier = score >= 32 ? "Full" : score >= 24 ? "Standard" : "Minimal";
 
     const report: CompletenessReport = {
       metadata,
@@ -262,7 +284,7 @@ function checkDecision(packetPath: string, json: boolean = false): void {
       const failedItems = checklist.filter(i => !i.checked && i.required);
       if (failedItems.length > 0) {
         console.log("\nMissing required items:");
-        failedItems.forEach(i => console.log(`   - ${item.name}`));
+        failedItems.forEach((failed) => console.log(`   - ${failed.name}`));
       }
     } else {
       console.log("\n✅ Decision is complete and ready to present.");

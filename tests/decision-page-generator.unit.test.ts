@@ -19,6 +19,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 
 import {
   validateDecisionPageDefinition,
@@ -208,16 +209,15 @@ const tests: UnitTest[] = [
       const outputPath = path.join(workspace, "decision-page.html");
       fs.writeFileSync(inputPath, JSON.stringify(buildFixtureDefinition(), null, 2));
 
+      // Resolve against this package so the suite works both as monorepo source and as an
+      // installed skill under `.agents/skills/decisions/`.
+      const generateScriptPath = path.resolve(
+        path.dirname(fileURLToPath(import.meta.url)),
+        "../scripts/generate-decision-page.ts",
+      );
       const result = spawnSync(
         "npx",
-        [
-          "tsx",
-          ".agents/skills/decisions/scripts/generate-decision-page.ts",
-          "--input",
-          inputPath,
-          "--output",
-          outputPath,
-        ],
+        ["tsx", generateScriptPath, "--input", inputPath, "--output", outputPath],
         {
           cwd: process.cwd(),
           encoding: "utf8",

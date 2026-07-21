@@ -11,10 +11,12 @@ description: when configuring unresolved decisions blocking implementation — s
 ## Overview
 
 Use this skill to turn unresolved user choices into a deterministic decision workflow. It finds or
-creates the active decision inventory, writes a detailed markdown decision packet to disk, presents
-the active choice back to the user as a compact table-based inline summary by default, records the
-user's answer, and returns a clear unblock-or-blocked status to the upstream workflow. The
-interactive decision page remains available only when the user explicitly asks for it.
+creates the active decision inventory, writes a **behavior-deep** markdown decision packet to disk
+(trigger, runtime flow, worked scenario, per-option before→after diffs), presents the active choice
+as a compact inline summary that still includes **Behavior in plain English**, records the user's
+answer, and returns a clear unblock-or-blocked status to the upstream workflow. Compact structure is
+required; shallow behavior content is a defect. The interactive decision page remains available only
+when the user explicitly asks for it.
 
 For a direct command lookup, see [Quick Commands](#quick-commands) below.
 
@@ -39,14 +41,17 @@ For a direct command lookup, see [Quick Commands](#quick-commands) below.
 
 | # | Misconception | Correction | Key concept |
 |---|---------------|------------|-------------|
-| 1 | The interactive HTML page is the default output. | The default is a compact inline table summary; the HTML page is opt-in only. | Default path vs opt-in path |
+| 1 | The interactive HTML page is the default output. | The default is a compact inline summary **plus required behavior narrative**; the HTML page is opt-in only. | Default path vs opt-in path |
 | 2 | All decisions can be presented at once in a batch. | This skill presents exactly one unresolved decision at a time, in order. | One-decision-at-a-time |
 | 3 | Decision packets can be reconstructed from memory. | Every packet must follow the exact contract in `references/decision-presentation-contract.md`. | Contract-driven output |
 | 4 | Mermaid diagrams are optional in decision packets. | Every packet must include at least one Mermaid diagram following the safety rules. | Visual requirement |
 | 5 | The user's natural-language answer does not need persistence. | Every answer must be persisted back to the authoritative inventory immediately. | Durability |
 | 6 | Any token format is acceptable for decision choices. | Tokens must follow `CHOOSE_DECISION_<ID>_<OPTION>` exactly. | Token consistency |
-| 7 | Decision options can be vague if context is clear. | Each option must have concrete code/diff, pros, cons, and impact. | Option concreteness |
+| 7 | Decision options can be vague if context is clear. | Each option needs behavioral diff, observables, edge cases, code/diff, pros, cons, and impact. | Option concreteness |
 | 8 | Exploratory paths are optional for commitment decisions. | Every packet must include `STUDY_OPTIONS`, `RESEARCH_OPTIONS`, and `DEEPENING_OPTIONS` first. | Exploratory-first |
+| 9 | Compact inline summary means shallow content. | Compact refers to structure (tables + short sections), not missing behavior depth. | Depth mandate |
+| 10 | Listing file paths equals explaining behavior. | Behavior needs trigger, step-by-step flow, state, and operator-visible outcomes. | Behavioral explanation |
+| 11 | A 3-node Mermaid diagram is enough "how it works". | Diagrams support prose; each option needs Before→After behavioral diff in words. | Prose + diagram |
 
 ## Quick Commands
 
@@ -63,7 +68,7 @@ npx tsx .agents/skills/decisions/tests/decision-page-generator.unit.test.ts
 # Session helper: prepare page and definition together
 npx tsx .agents/skills/decisions/scripts/decision-page-session.ts prepare --definition-file <definition.json> --output-dir <dir>
 
-# Check decision packet completeness (14-item checklist)
+# Check decision packet completeness (18-item checklist, includes behavior depth)
 npx tsx .agents/skills/decisions/scripts/check-decision-completeness.ts --latest
 npx tsx .agents/skills/decisions/scripts/check-decision-completeness.ts --packet <path.md>
 npx tsx .agents/skills/decisions/scripts/check-decision-completeness.ts --latest --json
@@ -80,7 +85,7 @@ Use this checklist before presenting any decision packet. Each item is a gate—
 | 1 | **Decision clarity** — The decision states a single clear choice with context | Prevents confused choices | Pre-draft |
 | 2 | **Status declared** — Current status (open/answered/deferred/blocked) is explicit | Enables tracking | Pre-draft |
 | 3 | **Upstream artifact linked** — Source plan or study path is referenced | Enables traceability | Pre-draft |
-| 4 | **Options concrete** — Each option has code/diff, pros, cons, and impact | Enables informed choice | Draft |
+| 4 | **Options concrete** — Each option has behavioral diff, observables, edge cases, code/diff, pros, cons, impact | Enables informed choice | Draft |
 | 5 | **Exploratory paths included** — STUDY/RESEARCH/DEEPENING options precede commitment | Prevents premature commitment | Draft |
 | 6 | **Mermaid diagram present** — At least one valid diagram following safety rules | Enables visual understanding | Draft |
 | 7 | **Diagram validated** — `npm run check:mermaid` passes without errors | Prevents broken renders | Draft |
@@ -88,17 +93,23 @@ Use this checklist before presenting any decision packet. Each item is a gate—
 | 9 | **Blocking status declared** — Whether decision blocks implementation is explicit | Enables planning gate | Draft |
 | 10 | **Impact surface documented** — Affected files, systems, tests are listed | Enables scope awareness | Draft |
 | 11 | **Recommended option stated** — Recommendation with evidence is provided | Provides guidance | Closeout |
-| 12 | **Inline summary compact** — Table has concrete identifiers, not abstract prose | Enables fast scanning | Closeout |
+| 12 | **Inline summary usable** — Behavior narrative + table with concrete identifiers | Enables understanding and scanning | Closeout |
 | 13 | **Answer persistence path clear** — How to persist the answer is documented | Enables durability | Closeout |
 | 14 | **Next decision queued** — Next unresolved decision is identified | Enables flow | Closeout |
+| 15 | **Behavior being decided** — Trigger, step-by-step flow, state, operator observation, fork | Enables full understanding | Draft |
+| 16 | **Worked scenario** — Concrete setup traced through current behavior and each option | Makes consequences tangible | Draft |
+| 17 | **Per-option behavioral diff** — Before→After prose for every choosable option | Prevents slogan-only options | Draft |
+| 18 | **Observable outcomes** — What humans notice after each option ships | Grounds choice in reality | Draft |
 
 ### Quality Tiers
 
 | Tier | Criteria | Use When |
 |------|----------|----------|
-| **Minimal** | Items 1, 2, 4, 8 | Simple choice, no blocking |
-| **Standard** | Items 1-10, 11 | Multi-option decision with evidence |
-| **Full** | All 14 items | Complex decision with blocking impact |
+| **Minimal** | Items 1, 2, 4, 8, 15 | Tiny non-blocking choice with real behavior explanation |
+| **Standard** | Items 1-11, 15-18 | Multi-option decision with evidence and depth |
+| **Full** | All 18 items | Complex or blocking decision |
+
+**Default bar:** Standard/Full. Minimal is only for low-stakes non-blocking choices — never for architecture, policy, or recycle/kill paths.
 
 ### Pre-Presentation Verification
 
@@ -108,14 +119,16 @@ Before presenting a decision, verify:
 □ Decision is clear and singular
 □ Status is declared (open/answered/deferred/blocked)
 □ Upstream artifact linked
-□ At least 2 options with concrete pros/cons/impact
+□ Behavior Being Decided explains trigger, flow, state, observation, fork
+□ Worked Scenario uses concrete identifiers and per-option outcomes
+□ At least 2 options with behavioral diff, observables, edge cases, pros/cons/impact
 □ Exploratory paths included (STUDY/RESEARCH/DEEPENING)
 □ Mermaid diagram present and validated
 □ Token format correct (CHOOSE_DECISION_<ID>_<OPTION>)
 □ Blocking status declared
 □ Impact surface documented
 □ Recommended option stated with evidence
-□ Inline summary is compact and scannable
+□ Inline summary includes Behavior in plain English (not tables only)
 □ Answer persistence path is clear
 □ Next decision is queued
 ```
@@ -130,6 +143,8 @@ Before presenting a decision, run these consistency checks. A decision that fail
 |-------|---------------|------------|
 | **Options vs Pros/Cons** | Every option has corresponding pros and cons | Add missing pros/cons |
 | **Pros/Cons vs Impact** | Pros/cons align with stated impact | Verify impact is consistent |
+| **Behavioral Diff vs Scenario** | Each option's diff matches its worked-scenario outcome | Align prose |
+| **Behavior vs System View** | Mermaid/flow matches Behavior Being Decided steps | Fix diagram or prose |
 | **Recommendation vs Evidence** | Recommendation has supporting evidence | Add evidence or qualify recommendation |
 | **Mermaid vs Options** | Diagram reflects all options in the decision | Update diagram |
 | **Token vs Options** | Each token matches exactly one option name | Fix token format |
@@ -144,11 +159,16 @@ Before presenting a decision, run these consistency checks. A decision that fail
 A decision with any of these must be fixed before presenting:
 
 - [ ] Option without any pros or cons
+- [ ] Option without Before→After behavioral diff prose
+- [ ] No `Behavior Being Decided` section (or only a title restatement)
+- [ ] No worked scenario with concrete identifiers
+- [ ] Inline summary with comparison tables but no Behavior in plain English
 - [ ] Recommendation without supporting evidence
 - [ ] Token format does not match `CHOOSE_DECISION_<ID>_<OPTION>`
 - [ ] Mermaid diagram fails validation
 - [ ] Contradictory statements in different options
 - [ ] Blocking decision without clear resolution path
+- [ ] Pros/cons that are only abstract adjectives with no mechanism
 
 ## Non-Negotiable Policy
 
@@ -158,15 +178,19 @@ A decision with any of these must be fixed before presenting:
    always read the relevant reference contract first.
 3. Default to the markdown decision packet artifact for every decision. The packet must follow
    `references/decision-presentation-contract.md`, be written to a file, and remain the detailed
-   source of truth. Present a compact table-based inline summary unless the user explicitly asks for
-   the full packet inline or the interactive page.
+   source of truth. Present a compact inline summary that **includes Behavior in plain English**
+   unless the user explicitly asks for the full packet inline or the interactive page.
 4. Only generate the interactive HTML page when the user explicitly requests it. When they do,
    present it as a clickable `file://` link with a plain-English summary of the decisions it
    resolves.
 5. `CHOOSEABLE_OPTIONS` must always list the recommended option first. Every option must include
-   description, pros, cons, concrete code or pseudo-diff, a Mermaid diagram, and impact notes.
-   Present exploratory paths (`STUDY_OPTIONS`, `RESEARCH_OPTIONS`, `DEEPENING_OPTIONS`) before
-   commitment paths.
+   multi-sentence description, Before→After behavioral diff, observable outcomes, edge cases,
+   pros, cons, concrete code or pseudo-diff, a Mermaid diagram with caption, worked-scenario
+   outcome, and impact notes. Present exploratory paths (`STUDY_OPTIONS`, `RESEARCH_OPTIONS`,
+   `DEEPENING_OPTIONS`) before commitment paths.
+5b. Never present a decision the user cannot fully understand from the packet's Behavior Being
+   Decided + Worked Scenario sections. Compact structure is required; shallow behavior content is
+   a defect. When depth and brevity conflict, keep depth.
 6. Every markdown decision packet must include a Mermaid diagram following the safety rules in
    `references/decision-presentation-contract.md`. Validate diagrams with
    `npm run check:mermaid -- --files <packet.md>` after writing.
@@ -213,9 +237,11 @@ Normalize each unresolved item with:
 - whether the decision blocks implementation immediately.
 
 After normalization, materialize the queue as a markdown decision packet per
-`references/decision-presentation-contract.md`. Write the packet under
-`.tmp/decisions/YYYY-MM-DD-{subject}/` unless an active study or plan
-already defines a better artifact location.
+`references/decision-presentation-contract.md` (including Depth Mandate sections). Write the packet
+under `.tmp/decisions/YYYY-MM-DD-{subject}/` unless an active study or plan already defines a better
+artifact location. Run
+`npx tsx .agents/skills/decisions/scripts/check-decision-completeness.ts --packet <path>` before
+presenting; do not present when required depth items fail.
 
 ## One-Decision Interaction Loop
 
@@ -244,10 +270,11 @@ already defines a better artifact location.
 
 | Task type | Load these files | Skip |
 |-----------|-----------------|------|
-| Formatting a markdown decision packet | `references/decision-presentation-contract.md` | `references/decision-page-json-contract.md` |
-| Building an interactive decision page | `references/decision-page-json-contract.md` | `references/decision-presentation-contract.md` |
+| Formatting a markdown decision packet | `references/decision-presentation-contract.md` (Depth Mandate + Behavior/Worked Scenario + option template) | `references/decision-page-json-contract.md` |
+| Building an interactive decision page | `references/decision-page-json-contract.md` | full presentation contract except when page embeds packet text |
 | Validating Mermaid diagrams in a packet | `references/decision-presentation-contract.md` (Mermaid Safety Rules) | `references/decision-page-json-contract.md` |
 | Syncing token blocks back to a plan | `references/decision-page-json-contract.md` (Clipboard Payload) | `references/decision-presentation-contract.md` |
+| Checking depth/completeness before present | Run `npx tsx .agents/skills/decisions/scripts/check-decision-completeness.ts --packet <path>` | -- |
 | Diagnostic / inspection-first | Run `npm run check:mermaid -- --files <packet.md>` and `npx tsx .agents/skills/decisions/tests/decision-page-generator.unit.test.ts` before loading files | -- |
 
 For diagnostic requests, run the inspection commands first before loading any reference files. Load
@@ -282,47 +309,60 @@ Use this template when presenting a decision to the user. Fill in each section w
 **Upstream:** [Plan/study path]
 **Blocks Implementation:** [Yes | No]
 
-## Context
-[Why this decision must be made now]
+## Why This Needs A Choice Now
+[Blocked work, wrong-choice risk, affected areas]
 
-## Options
+## Context You Need To Decide
+[Current state, constraints, assumptions, tradeoffs, unknowns, impacted surface]
 
-### Exploratory Paths
-- `STUDY_OPTIONS`: Conduct further study before deciding
-- `RESEARCH_OPTIONS`: Research external best practices
-- `DEEPENING_OPTIONS`: Gather more evidence or analysis
+## Behavior Being Decided
+- **Trigger:** ...
+- **Entry points:** `module.fn`, route, job, ...
+- **Step-by-step current flow:** 1) ... 2) ... 3) ...
+- **State read / written:** ...
+- **Operator observation:** ...
+- **Invariant vs fork:** ...
 
-### Commitment Options
-#### Option A: [Name]
-- **Description:** One clear sentence
-- **Pros:** Bullet list of advantages
-- **Cons:** Bullet list of disadvantages
-- **Code/Diff:** ```[pseudo]code or diff```
-- **Impact:** Affected files, systems, tests
+## Worked Scenario
+- **Name / Setup / Trigger:** concrete identifiers
+- **Current outcome:** ...
+- **Per-option outcomes:** ...
 
-#### Option B: [Name]
-[Same structure]
-
-## Recommendation
-**[Option A]** is recommended because [evidence-based reason].
-
-## Mermaid Diagram
+## System View
 ```mermaid
-graph LR
-    A[Current] --> B{Decision}
-    B --> C[Option A]
-    B --> D[Option B]
+flowchart LR
+    A["Trigger"] --> B["Current flow"]
+    B --> C{"Decision fork"}
 ```
 
-## CHOOSEABLE_OPTIONS
-- `CHOOSE_DECISION_<ID>_OPTION_A` (Recommended): Choose Option A
-- `CHOOSE_DECISION_<ID>_OPTION_B`: Choose Option B
-- `STUDY_OPTIONS`: Conduct further study first
-- `RESEARCH_OPTIONS`: Research external best practices first
-- `DEEPENING_OPTIONS`: Gather more evidence first
+## Representative Code
+```ts
+// real or pseudo-diff grounded in entry points
+```
 
-## Next
-**Following decision:** [Next decision ID or "None"]
+## STUDY_OPTIONS / RESEARCH_OPTIONS / DEEPENING_OPTIONS
+[At least one path each]
+
+## CHOOSEABLE_OPTIONS
+### `(recommended)` `CHOOSE_DECISION_<ID>_<OPTION_A>` `(recommended)`
+- Description (2–4 sentences)
+- Behavioral Diff Before→After
+- Observable Outcomes
+- Edge Cases
+- Pros / Cons
+- Representative Code
+- How It Works (caption + mermaid)
+- Worked Scenario Outcome
+- Impact
+
+### `CHOOSE_DECISION_<ID>_<OPTION_B>`
+[Same structure]
+
+## How The Answer Will Be Recorded
+[Persistence path + unblock state]
+
+## Summary
+[Decision, recommendation, exploration, choices, blocking, next]
 ```
 
 ### Token Format Rules
@@ -339,20 +379,24 @@ graph LR
 
 For each option, verify:
 ```
-□ Description is one clear sentence
-□ At least 2 pros listed
-□ At least 2 cons listed
+□ Description is 2–4 sentences (not a slogan)
+□ Behavioral Diff has explicit Before and After
+□ Observable Outcomes name what humans notice
+□ At least 2 edge cases (handles and/or ignores)
+□ At least 2 pros and 2 cons grounded in the diff
 □ Code/diff is concrete (not vague)
+□ Worked Scenario Outcome is scenario-specific
 □ Impact lists specific files/tests/systems
-□ Mermaid diagram reflects the options
+□ Mermaid diagram + caption reflects the option
 □ Token format matches (CHOOSE_DECISION_<ID>_<OPTION>)
 ```
 
 ## Common Pitfalls
 
 1. **Generating the HTML page by default.** This happens when the agent assumes richer UX is always
-   better. The correct approach is to default to the markdown packet and inline table summary unless
-   the user explicitly asks for the page. See `references/decision-presentation-contract.md`.
+   better. The correct approach is to default to the markdown packet and inline summary (with
+   Behavior in plain English) unless the user explicitly asks for the page. See
+   `references/decision-presentation-contract.md`.
 2. **Skipping Mermaid validation.** This happens when the agent trusts diagrams written from memory.
    A single syntax error breaks the entire render. Always run
    `npm run check:mermaid -- --files <packet.md>` after writing. See
@@ -369,6 +413,11 @@ For each option, verify:
 6. **Omitting exploratory paths.** This happens when the agent rushes to implementation options.
    Every packet must include `STUDY_OPTIONS`, `RESEARCH_OPTIONS`, and `DEEPENING_OPTIONS` before
    `CHOOSEABLE_OPTIONS`. See `references/decision-presentation-contract.md`.
+7. **Shallow behavior content.** This happens when the agent optimizes for short tables and skips
+   teaching the runtime path. Always write `Behavior Being Decided` + `Worked Scenario` in the
+   packet and mirror the behavior narrative inline. File lists and 3-node diagrams are not enough.
+8. **Slogan options.** This happens when options are titled without Before→After diffs. Every
+   choosable option needs behavioral diff, observables, and scenario outcome.
 
 ## Troubleshooting
 
@@ -377,8 +426,9 @@ For each option, verify:
 | Mermaid validation fails with "Syntax error in text" | Unquoted node label containing parentheses, colons, or backticks | Quote every label with `["..."]` and remove markdown syntax inside labels. See `references/decision-presentation-contract.md`. |
 | Generated HTML page shows no decisions | JSON definition missing `decisions` array or all decisions filtered by `dependsOn` | Validate the definition with `npx tsx .agents/skills/decisions/tests/decision-page-generator.unit.test.ts` and check `dependsOn` chains. |
 | Token block sync fails with "unknown decision token" | Token in the pasted block does not match any option in the definition | Verify the token spelling matches `CHOOSE_DECISION_<DECISION_ID>_<OPTION_NAME>` exactly. |
-| Inline summary is too long for terminal scanning | Comparison table has too many rows or abstract cells | Abbreviate aggressively; move detail to the packet file; keep only concrete identifiers and consequences. |
-| User cannot choose from the inline summary alone | Cells lack exact identifiers, file names, or behavior changes | Add concrete mechanism or affected surface plus practical consequence to each cell. |
+| Inline summary is too long for terminal scanning | Comparison table has too many low-value rows | Keep Behavior in plain English + behavior/scenario comparison rows; move secondary rows to the packet. Never delete the behavior narrative first. |
+| User cannot choose from the inline summary alone | Missing behavior narrative or cells lack identifiers/outcomes | Add Behavior in plain English; fill Runtime flow change / Worked scenario outcome rows with concrete before→after text. |
+| User says the decision is too shallow | Packet skipped Behavior Being Decided / Worked Scenario or options lack diffs | Rewrite those sections per Depth Mandate; re-run completeness checker before re-presenting. |
 
 ## Temporary Files
 
@@ -389,8 +439,9 @@ Place temporary files under `.tmp/decisions/YYYY-MM-DD-{subject}/`. The root
 
 The `references/` directory contains 2 flat files (no subfolders):
 
-- `references/decision-presentation-contract.md` -- Exact output structure for the markdown fallback
-  packet, section names, selector-token rules, required follow-up options, and Mermaid Safety Rules.
+- `references/decision-presentation-contract.md` -- Depth Mandate, detailed packet order (including
+  Behavior Being Decided and Worked Scenario), option template with behavioral diffs, inline
+  summary rules, selector-token rules, exploratory paths, and Mermaid Safety Rules.
 - `references/decision-page-json-contract.md` -- JSON definition schema for the interactive decision
   page, dependency and invalidation rules, and summary-plus-tokens clipboard contract.
 
