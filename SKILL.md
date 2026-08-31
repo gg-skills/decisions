@@ -183,7 +183,9 @@ A decision with any of these must be fixed before presenting:
 4. Only generate the interactive HTML page when the user explicitly requests it. When they do,
    present it as a clickable `file://` link with a plain-English summary of the decisions it
    resolves.
-5. `CHOOSEABLE_OPTIONS` must always list the recommended option first. Every option must include
+5. `CHOOSEABLE_OPTIONS` must always list the recommended option first. When presenting the
+   inline summary, also invoke the harness Ask User picker if that tool is available, mapped per
+   `chooseable-options/references/ask-user-harness.md`. Every option must include
    multi-sentence description, Before→After behavioral diff, observable outcomes, edge cases,
    pros, cons, concrete code or pseudo-diff, a Mermaid diagram with caption, worked-scenario
    outcome, and impact notes. Present exploratory paths (`STUDY_OPTIONS`, `RESEARCH_OPTIONS`,
@@ -247,14 +249,15 @@ presenting; do not present when required depth items fail.
 
 1. Build an ordered queue of unresolved decisions, with blocking items first.
 2. Write a markdown decision packet per `references/decision-presentation-contract.md` for the
-   active decision, validate its Mermaid diagrams, and present a compact inline table summary.
+   active decision, validate its Mermaid diagrams, and present a compact inline table summary
+   plus the native Ask User picker when that tool is available.
 3. Only if the user explicitly asks for the interactive page: build JSON per
    `references/decision-page-json-contract.md` and generate it with
    `npx tsx .agents/skills/decisions/scripts/decision-page-session.ts prepare ...` or
    `npx tsx .agents/skills/decisions/scripts/generate-decision-page.ts ...`. Present as a clickable `file://` link with a plain-English
    summary.
 4. Wait for the user reply.
-5. Support reply modes: direct token, pasted token block, natural language, clarifying questions,
+5. Support reply modes: native picker selection, direct token, pasted token block, natural language, clarifying questions,
    request for study/research/explanation.
 6. If the user requests simpler explanation: keep decision active, route to
    `explain/SKILL.md`, then return.
@@ -286,6 +289,7 @@ only the subset the task needs.
   implementation continues.
 - `study/SKILL.md` -- hand off study-derived open questions and recommendation
   tradeoffs when the user must choose a direction.
+- `chooseable-options/SKILL.md` -- owns printed-token plus native Ask User presentation.
 - `explain/SKILL.md` -- use when the options are valid but the current decision
   surface is too dense for confident user comprehension.
 - `research-online/SKILL.md` -- use when current external docs, standards, or product
