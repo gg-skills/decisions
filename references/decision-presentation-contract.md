@@ -75,6 +75,27 @@ Only follow this path when the user explicitly asks for the interactive decision
 5. After writing a markdown decision packet to a file, validate its Mermaid diagrams:
    `npm run check:mermaid -- --files <decision-packet.md>`
 
+   When validation passes, insert a marker comment immediately above each validated ```mermaid
+   fence so the completeness checker can verify the run:
+
+   ```bash
+   npm run check:mermaid -- --files <decision-packet.md> --emit-marker
+   ```
+
+   The marker format is:
+
+   ```markdown
+   <!-- mermaid-checked: 2026-09-03T04:00:00Z diagrams=1 exit=0 -->
+   ```mermaid
+   flowchart LR
+       A --> B
+   ```
+   ```
+
+   The completeness checker verifies each `mermaid` fence has a recent marker (default
+   staleness window 24h, override via `MERMAID_STALENESS_MS` env var). Missing or stale markers
+   fail checklist item 7.
+
 ## Default Chat Presentation (Compact Table Summary)
 
 When the user did **not** explicitly request the interactive page and did **not** explicitly ask

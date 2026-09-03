@@ -433,6 +433,10 @@ For each option, verify:
 | Inline summary is too long for terminal scanning | Comparison table has too many low-value rows | Keep Behavior in plain English + behavior/scenario comparison rows; move secondary rows to the packet. Never delete the behavior narrative first. |
 | User cannot choose from the inline summary alone | Missing behavior narrative or cells lack identifiers/outcomes | Add Behavior in plain English; fill Runtime flow change / Worked scenario outcome rows with concrete before→after text. |
 | User says the decision is too shallow | Packet skipped Behavior Being Decided / Worked Scenario or options lack diffs | Rewrite those sections per Depth Mandate; re-run completeness checker before re-presenting. |
+| `npm error Missing script: check:mermaid` from the repo root | Root `package.json` is out of sync with the decisions skill | Confirm `package.json` lists `check:mermaid`; if missing, run `npm install` then retry. As a fallback run the script directly: `npx tsx .agents/skills/decisions/scripts/check-mermaid.ts --files <packet>`. |
+| `check:mermaid` exits 1 with `unquoted-square-label` | A node label is `[label]` instead of `["label"]` | Quote every label: `A["Start"] --> B["End"]`. See `references/decision-presentation-contract.md` Mermaid Safety Rules. |
+| `check:mermaid` exits 1 with `extraction-failed` | Markdown file has no ```mermaid fences but `--input-type markdown` was forced | Drop the `--input-type markdown` flag (let `auto` decide) or add a mermaid fence. |
+| `check-decision-completeness` reports `Diagram validated` as FAILED | A ```mermaid fence is missing its `<!-- mermaid-checked: ... -->` marker | Re-run `npm run check:mermaid -- --files <packet> --emit-marker` and ensure the marker timestamp is within `MERMAID_STALENESS_MS` (default 24h). |
 
 ## Temporary Files
 

@@ -78,7 +78,7 @@ const CHECKLIST_ITEMS: Omit<ChecklistItem, "checked">[] = [
   { number: 4, name: "Options concrete", description: "Each option has code/diff, pros, cons, impact", required: true, weight: 2 },
   { number: 5, name: "Exploratory paths included", description: "STUDY/RESEARCH/DEEPENING options precede commitment", required: true, weight: 2 },
   { number: 6, name: "Mermaid diagram present", description: "At least one valid diagram", required: true, weight: 2 },
-  { number: 7, name: "Diagram validated", description: "npm run check:mermaid passes", required: true, weight: 1 },
+  { number: 7, name: "Diagram validated", description: "Each ```mermaid fence has a recent <!-- mermaid-checked: ... --> marker", required: true, weight: 1 },
   { number: 8, name: "Token format correct", description: "CHOOSE_DECISION_<ID>_<OPTION> format", required: true, weight: 2 },
   { number: 9, name: "Blocking status declared", description: "Whether decision blocks implementation", required: true, weight: 1 },
   { number: 10, name: "Impact surface documented", description: "Affected files, systems, tests listed", required: true, weight: 1 },
@@ -144,6 +144,68 @@ function guessTier(content: string): string {
  * @param content - Full decision markdown body.
  * @param item - Checklist row definition without the runtime `checked` flag.
  */
+/**
+ * Marker-aware check for checklist item 7 ("Diagram validated").
+ *
+ * For each ```mermaid fence in `content`, looks upward for the most recent
+ * `<!-- mermaid-checked: <iso-timestamp> ... exit=<code> -->` comment line.
+ * The check passes when every fence has a marker with `exit=0` whose
+ * timestamp is within `MERMAID_STALENESS_MS` of `now` (default 24h).
+ *
+ * @param content - Full decision markdown body.
+ * @param now - Reference timestamp for staleness comparison (defaults to `new Date()`).
+ * @returns true when every mermaid fence has a recent marker with `exit=0`.
+ */
+function checkMermaidMarkersValid(
+  content: string,
+  now: Date = new Date()
+): boolean {
+  const fenceRegex = /^```[ \t]*mermaid[^\n\r]*$/gm;
+  const markerRegex = /<!--\s*mermaid-checked:\s*(\S+)\s+([^>]*?)\s*-->/;
+  const stalenessMs = Number(process.env["MERMAID_STALENESS_MS"] ?? 24 * 60 * 60 * 1000);
+  const fences: number[] = [];
+  let match: RegExpExecArray | null;
+  while ((match = fenceRegex.exec(content)) !== null) {
+    fences.push(match.index ?? 0);
+  }
+  if (fences.length === 0) {
+    return true;
+  }
+  for (const fenceOffset of fences) {
+    const before = content.slice(0, fenceOffset);
+    const linesBefore = before.split(/\r?\n/);
+    let foundMarker = false;
+    for (let i = linesBefore.length - 1; i >= Math.max(0, linesBefore.length - 20); i -= 1) {
+      const line = linesBefore[i] ?? "";
+      const markerMatch = line.match(markerRegex);
+      if (!markerMatch) continue;
+      const iso = markerMatch[1] ?? "";
+      const attrs = markerMatch[2] ?? "";
+      const exitMatch = attrs.match(/exit=(\d+)/);
+      const exit = exitMatch ? Number(exitMatch[1]) : NaN;
+      const markerTime = Date.parse(iso);
+      if (Number.isNaN(markerTime)) {
+        foundMarker = false;
+        break;
+      }
+      if (now.getTime() - markerTime > stalenessMs) {
+        foundMarker = false;
+        break;
+      }
+      if (exit !== 0) {
+        foundMarker = false;
+        break;
+      }
+      foundMarker = true;
+      break;
+    }
+    if (!foundMarker) {
+      return false;
+    }
+  }
+  return true;
+}
+
 function checkItem(content: string, item: Omit<ChecklistItem, "checked">): boolean {
   switch (item.number) {
     case 1: return /^#.*Decision:.*\n/m.test(content) && (content.match(/^#.*Decision:.*\n/m)?.[0].length ?? 0) > 15;
@@ -152,7 +214,7 @@ function checkItem(content: string, item: Omit<ChecklistItem, "checked">): boole
     case 4: return /Pros:|Cons:|pros:|cons:|impact/i.test(content);
     case 5: return /STUDY_OPTIONS|RESEARCH_OPTIONS|DEEPENING_OPTIONS/i.test(content);
     case 6: return /```mermaid|graph\s+\w+/im.test(content);
-    case 7: return /check:mermaid|mermaid.*validated/i.test(content);
+    case 7: return checkMermaidMarkersValid(content);
     case 8: return /CHOOSE_DECISION_\w+_\w+|`CHOOSE_DECISION_\w+_\w+`/i.test(content);
     case 9: return /blocks?\s+implementation|blocking.*decision/i.test(content);
     case 10: return /Affected\s+Files|Impact|impacted.*files/i.test(content);
