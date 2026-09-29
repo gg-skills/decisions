@@ -348,9 +348,28 @@ concrete. If the decision is not code-first, use config, schema, command, or pse
 This section is mandatory and must appear after `STUDY_OPTIONS`, `RESEARCH_OPTIONS`, and
 `DEEPENING_OPTIONS`, so the user sees research/deepening paths before commitment paths.
 
+The number of choosable options is contextual. List as many genuinely distinct options as the
+evidence supports (one, two, or more). If the evidence is too thin to recommend any path
+safely, use the no-safe-default branch below instead of inventing a recommendation marker.
+
+### No-Safe-Default Branch
+
+Use this branch when none of the viable options has enough evidence to be marked recommended,
+typically because the upstream data is incomplete, the option set is non-exhaustive, or the
+user must surface preferences that the agent cannot infer.
+
+- Omit the `(recommended)` marker entirely. Do not invent a recommendation.
+- Order the options neutrally (e.g., by complexity, by reversal cost, or alphabetically).
+- Add a single leading bullet above the option list:
+  `**No safe default:** the evidence is too thin to recommend one option over another; review
+  each option and select manually, or route to `STUDY_OPTIONS` / `RESEARCH_OPTIONS` for more
+  evidence.`
+- The recommendation line in the packet's `Summary` section should read `Recommendation: none
+  (evidence is too thin)` instead of naming an option.
+
 Within this section, list options in this order:
 
-1. recommended option first,
+1. recommended option first (when present),
 2. remaining viable options after that.
 
 For every option include all of the following:
