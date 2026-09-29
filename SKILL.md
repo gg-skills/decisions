@@ -60,6 +60,7 @@ For a direct command lookup, see [Quick Commands](#quick-commands) below.
 npm run check:mermaid -- --files <decision-packet.md>
 
 # Generate the interactive decision page from a JSON definition
+# Runner alternatives: bunx tsx / pnpm dlx tsx / deno run -A npm:tsx / node --import tsx / yarn dlx tsx
 npx tsx .agents/skills/decisions/scripts/generate-decision-page.ts --input <definition.json> --output <page.html>
 
 # Run the full decision page test suite
@@ -242,7 +243,7 @@ After normalization, materialize the queue as a markdown decision packet per
 `references/decision-presentation-contract.md` (including Depth Mandate sections). Write the packet
 under `.tmp/decisions/YYYY-MM-DD-{subject}/` unless an active study or plan already defines a better
 artifact location. Run
-`npx tsx .agents/skills/decisions/scripts/check-decision-completeness.ts --packet <path>` before
+`npx tsx .agents/skills/decisions/scripts/check-decision-completeness.ts --packet <path>`[^rt] before
 presenting; do not present when required depth items fail.
 
 ## One-Decision Interaction Loop
@@ -253,8 +254,8 @@ presenting; do not present when required depth items fail.
    plus the native Ask User picker when that tool is available.
 3. Only if the user explicitly asks for the interactive page: build JSON per
    `references/decision-page-json-contract.md` and generate it with
-   `npx tsx .agents/skills/decisions/scripts/decision-page-session.ts prepare ...` or
-   `npx tsx .agents/skills/decisions/scripts/generate-decision-page.ts ...`. Present as a clickable `file://` link with a plain-English
+   `npx tsx .agents/skills/decisions/scripts/decision-page-session.ts prepare ...`[^rt] or
+   `npx tsx .agents/skills/decisions/scripts/generate-decision-page.ts ...`[^rt]. Present as a clickable `file://` link with a plain-English
    summary.
 4. Wait for the user reply.
 5. Support reply modes: native picker selection, direct token, pasted token block, natural language, clarifying questions,
@@ -277,8 +278,8 @@ presenting; do not present when required depth items fail.
 | Building an interactive decision page | `references/decision-page-json-contract.md` | full presentation contract except when page embeds packet text |
 | Validating Mermaid diagrams in a packet | `references/decision-presentation-contract.md` (Mermaid Safety Rules) | `references/decision-page-json-contract.md` |
 | Syncing token blocks back to a plan | `references/decision-page-json-contract.md` (Clipboard Payload) | `references/decision-presentation-contract.md` |
-| Checking depth/completeness before present | Run `npx tsx .agents/skills/decisions/scripts/check-decision-completeness.ts --packet <path>` | -- |
-| Diagnostic / inspection-first | Run `npm run check:mermaid -- --files <packet.md>` and `npx tsx .agents/skills/decisions/tests/decision-page-generator.unit.test.ts` before loading files | -- |
+| Checking depth/completeness before present | Run `npx tsx .agents/skills/decisions/scripts/check-decision-completeness.ts --packet <path>`[^rt] | -- |
+| Diagnostic / inspection-first | Run `npm run check:mermaid -- --files <packet.md>` and `npx tsx .agents/skills/decisions/tests/decision-page-generator.unit.test.ts`[^rt] before loading files | -- |
 
 For diagnostic requests, run the inspection commands first before loading any reference files. Load
 only the subset the task needs.
@@ -428,12 +429,12 @@ For each option, verify:
 | Symptom | Likely cause | Fix |
 |---------|-------------|-----|
 | Mermaid validation fails with "Syntax error in text" | Unquoted node label containing parentheses, colons, or backticks | Quote every label with `["..."]` and remove markdown syntax inside labels. See `references/decision-presentation-contract.md`. |
-| Generated HTML page shows no decisions | JSON definition missing `decisions` array or all decisions filtered by `dependsOn` | Validate the definition with `npx tsx .agents/skills/decisions/tests/decision-page-generator.unit.test.ts` and check `dependsOn` chains. |
+| Generated HTML page shows no decisions | JSON definition missing `decisions` array or all decisions filtered by `dependsOn` | Validate the definition with `npx tsx .agents/skills/decisions/tests/decision-page-generator.unit.test.ts`[^rt] and check `dependsOn` chains. |
 | Token block sync fails with "unknown decision token" | Token in the pasted block does not match any option in the definition | Verify the token spelling matches `CHOOSE_DECISION_<DECISION_ID>_<OPTION_NAME>` exactly. |
 | Inline summary is too long for terminal scanning | Comparison table has too many low-value rows | Keep Behavior in plain English + behavior/scenario comparison rows; move secondary rows to the packet. Never delete the behavior narrative first. |
 | User cannot choose from the inline summary alone | Missing behavior narrative or cells lack identifiers/outcomes | Add Behavior in plain English; fill Runtime flow change / Worked scenario outcome rows with concrete before→after text. |
 | User says the decision is too shallow | Packet skipped Behavior Being Decided / Worked Scenario or options lack diffs | Rewrite those sections per Depth Mandate; re-run completeness checker before re-presenting. |
-| `npm error Missing script: check:mermaid` from the repo root | Root `package.json` is out of sync with the decisions skill | Confirm `package.json` lists `check:mermaid`; if missing, run `npm install` then retry. As a fallback run the script directly: `npx tsx .agents/skills/decisions/scripts/check-mermaid.ts --files <packet>`. |
+| `npm error Missing script: check:mermaid` from the repo root | Root `package.json` is out of sync with the decisions skill | Confirm `package.json` lists `check:mermaid`; if missing, run `npm install` then retry. As a fallback run the script directly: `npx tsx .agents/skills/decisions/scripts/check-mermaid.ts --files <packet>`[^rt]. |
 | `check:mermaid` exits 1 with `unquoted-square-label` | A node label is `[label]` instead of `["label"]` | Quote every label: `A["Start"] --> B["End"]`. See `references/decision-presentation-contract.md` Mermaid Safety Rules. |
 | `check:mermaid` exits 1 with `extraction-failed` | Markdown file has no ```mermaid fences but `--input-type markdown` was forced | Drop the `--input-type markdown` flag (let `auto` decide) or add a mermaid fence. |
 | `check-decision-completeness` reports `Diagram validated` as FAILED | A ```mermaid fence is missing its `<!-- mermaid-checked: ... -->` marker | Re-run `npm run check:mermaid -- --files <packet> --emit-marker` and ensure the marker timestamp is within `MERMAID_STALENESS_MS` (default 24h). |
@@ -462,3 +463,5 @@ The `references/` directory contains 2 flat files (no subfolders):
   closure.
 - Snapshot verified: 2026-04-30. Verify Mermaid validator versions, CLI behavior, and npm script
   names against current `package.json` before relying on bundled guidance.
+
+[^rt]: `npx tsx` accepts any standard runner — `bunx tsx`, `pnpm dlx tsx`, `deno run -A npm:tsx`, `node --import tsx`, or `yarn dlx tsx`. The first five auto-fetch `tsx` on demand; only `node --import tsx` requires `tsx` to be installed locally first (`npm i -D tsx`, or `npm i -g tsx` if you cannot reach the npm registry). Bun users can also skip `tsx` entirely and run TypeScript directly via `bun <script>`. Pick whichever your project ships. The canonical runtime decision table lives in the `skills-manager` skill under `Runtime Selection` (only available when working in the full `gg-skills` monorepo).
