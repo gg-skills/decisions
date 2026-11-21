@@ -2,8 +2,7 @@
 /**
  * @fileoverview TypeScript harness for the decisions-skill Mermaid validator.
  *
- * Mirrors the notion-tasks mermaid test matrix (parse / lint / multi-fence /
- * raw `.mmd`) so both skills validate the same way.
+ * Covers parsing, linting, multiple fenced diagrams, and raw `.mmd` files.
  *
  * @testing CLI: npm run check:mermaid:test
  * @see skills/decisions/scripts/check-mermaid.ts - Validator under test.

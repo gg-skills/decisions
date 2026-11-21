@@ -17,9 +17,7 @@
  *
  * @testing CLI: npm run check:mermaid -- --files <packet.md>
  * @testing CLI: npx tsx .agents/skills/decisions/scripts/check-mermaid.ts --help
- * @see skills/notion-tasks/scripts/validate-mermaid.ts - reference validator
- *      whose structure this script intentionally mirrors to keep both
- *      surfaces close in shape.
+ * @see ./check-mermaid.test.ts - Covers parsing, linting, and file formats.
  * @documentation reviewed=2026-09-03 standard=FILE_OVERVIEW_STANDARDS_TYPESCRIPT@3
  */
 
